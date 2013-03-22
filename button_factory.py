@@ -1,4 +1,5 @@
 from Tkinter import *
+import shutil
 import os
 
 def attributesFromDict(d):
@@ -23,10 +24,7 @@ class LabelButtonFactory(object):
 
 	def _make_command(self, target_area, label):
 		cnt = self._label_wrap(label)
-		if label.startswith('/'):	
-			cmd = lambda: target_area.insert(INSERT, cnt);
-		else:
-			cmd = lambda: target_area.insert(INSERT, cnt) 
+		cmd = lambda: target_area.insert(INSERT, cnt) 
 		return cmd
 	
 	def ret_button(self, target_area, frame, label, width=None, height=None):
@@ -47,6 +45,28 @@ class AttrButtonFactory(LabelButtonFactory):
 class TemplateButtonFactory(LabelButtonFactory):
 	def _label_wrap(self, label):
 		return "{%% %s %%}" % label
+
+#class DjangoTemplateButtonFactory(AttrButtonFactory):
+#	def __init__(self, label, frame, target_area, content, width=None, height=None):
+#		self.label = label 
+#		self.frame = frame 
+#		self.ta = target_area
+#		self.cnt = content
+#		self.width = width
+#		self.height = height
+#		self.button = self.ret_button(self.ta, self.frame, self.label, self.cnt, self.width, self.height)
+	
+#	def _make_command(self, target_area, label, content):
+#		cnt = content
+#		cmd = lambda: target_area.insert(INSERT, cnt)
+#		return cmd
+	
+#	def ret_button(self, target_area, frame, label, content, width=None, height=None):
+#		cmd = self._make_command(target_area, label, content)
+#		btn_name = self._label_wrap(label)
+#		btn = Button(frame, text=btn_name, width=width, height=height, command=cmd )
+#		return btn
+	
 	
 class ButtonFrame(object):
 	def __init__(self, widget, target_area, label_list, btn_factory):
@@ -72,7 +92,7 @@ class ButtonFrame(object):
 			bgn = max_btn_num * i
 			end = bgn + max_btn_num
 			for label in label_list[bgn:end]:
-				btn = btn_factory(label, frame_tmp, ta, 8).button
+				btn = btn_factory(label, frame_tmp, ta, 8, 1).button
 				btn.pack(side=LEFT)
 
 class LabelButtonFrame(ButtonFrame):
@@ -111,11 +131,19 @@ class MenuFunction(object):
 		return s
 
 	def create_template(self):
+		reload(sys)
+		sys.setdefaultencoding("utf-8")
 		text = self.get_text()
 		tmp_file = open(template_file, 'w')
 		tmp_file.write(text)
 		tmp_file.close()
-
+	
+	def save_last_text(self):
+		shutil.copy(template_file, tmp_file)
+	
+	def show_last_save_text(self):
+		shutil.copy(tmp_file, template_file)
+		
 	def apache_restart(self):
 		os.system("/etc/init.d/apache2 restart")    
 
@@ -130,7 +158,9 @@ if __name__ == '__main__':
 	#init some args
 	templates_dir = '/opt/django/templetes'
 	template_file = templates_dir + '/tktest.html'
+	tmp_file = templates_dir + 'last_file_text'
 	url = "http://127.0.0.1/tktest/"
+	jqtest_1 = '{% extends "jq_base.html" %}\n{% block content %}\n\t<script>\n\n\t</script>\n{% endblock %}'
 
 	#init menubar 
 	menubar = Menu(root)
@@ -139,6 +169,8 @@ if __name__ == '__main__':
 	menubar.add_command(label="create_template", command=menufunc.create_template)
 	menubar.add_command(label="apache_restart", command=menufunc.apache_restart)
 	menubar.add_command(label="get_text", command=menufunc.get_text)
+	menubar.add_command(label="save", command=menufunc.save_last_text)
+	menubar.add_command(label="show_last_save", command=menufunc.show_last_save_text)
 	menubar.add_command(label="QUIT", command=root.quit)
 	root.config(menu=menubar)
 
@@ -147,17 +179,21 @@ if __name__ == '__main__':
 	l_list += ['ul', 'li', 'script','style'] 
 	l_list += ['form', 'option','button','a']
 
-	a_list =  ['\n', '\t', 'type=""', 'name=""', 'style=""',]
 	t_list =  ['extends', 'block', 'endblock']
-	a_list += ['"base.html"', '"jq_base.html"', 'content', 'text/javascript']
-	a_list += ['$("")', 'alert();', '.addClass("")','.removeClass("")', '.children("")']
-	a_list += ['.show()', '.hide()', '.end()', '.siblings()', '.click()']
-	a_list += ['function(){\n\n}']
 
-	labelBtnFrame = LabelButtonFrame(root, ta, l_list, LabelButtonFactory)
+	a_list =  ['$(', ')', '$("', '")','\n', '\t']
+	a_list += ['content','document','window','var ', '$', 'text/javascript']
+	a_list += ['alert(', ');', 'type=""', 'name=""', 'style=""','titile=""']
+	a_list += ['.addClass("")','.removeClass("")', '.children("")']
+	a_list += ['.show()', '.load()', '.ready()', '.hide()', '.end()', '.siblings()', '.click()']
+	a_list += ['function(){\n\t\t}']
+	a_list += [jqtest_1]
+
+
 	attrBtnFrame = ButtonFrame(root, ta, a_list, AttrButtonFactory)
+	labelBtnFrame = LabelButtonFrame(root, ta, l_list, LabelButtonFactory)
 	djangoBtnFrame = ButtonFrame(root, ta, t_list, TemplateButtonFactory)
-	#templatesBtnFrame = ButtonFrame(root, ta, templates, AttrButtonFactory)
+	#templatesBtnFrame = ButtonFrame(root, ta, d_list, AttrButtonFactory)
 	#funcBtnFrame = ButtonFrame(root, ta, func_list, AttrButtonFactory)
 	
 	root.mainloop()
