@@ -22,22 +22,15 @@ class LabelButtonFactory(object):
 		return self._label_wrap(label)
 
 	def _make_command(self, target_area, label):
-		print "in %s._make_command" % self
 		cnt = self._label_wrap(label)
-		print "cnt = %s" % cnt
 		if label.startswith('/'):	
 			cmd = lambda: target_area.insert(INSERT, cnt);
 		else:
 			cmd = lambda: target_area.insert(INSERT, cnt) 
-		print "cmd = %s" % cmd
-		print "target_area = %r" % ta
 		return cmd
 	
 	def ret_button(self, target_area, frame, label, width=None, height=None):
-		print "in ret_button"
-		print "target_area = %r" % ta
 		cmd = self._make_command(target_area, label)
-		print "cmd = %r" % cmd
 		if label == "\n":
 			btn_name = "Enter"
 		elif label == "\t":	
@@ -106,7 +99,6 @@ class LabelButtonFrame(ButtonFrame):
 
 class MenuFunction(object):
 	def __init__(self, target_area):
-		#self.widget = 
 		self.target_area = target_area
 
 	def hello(self):
